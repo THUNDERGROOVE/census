@@ -150,6 +150,10 @@ func (c *Character) GetRibbons() int {
 	return c.getStatFromStatHistory("ribbons")
 }
 
+func (c *Character) GetCerts() int {
+	return c.getStatFromStatHistory("certs")
+}
+
 func (c *Character) GetFacilitiesDefended() int {
 	return c.getStatFromStatHistory("facility_defend")
 }
@@ -174,6 +178,10 @@ func (c *Character) getStatFromStatHistory(s string) int {
 		}
 	}
 	return 0
+}
+
+func (c *Character) ServerName() string {
+	return ""
 }
 
 func (c *Census) QueryCharacterByExactName(name string) (*Character, error) {
