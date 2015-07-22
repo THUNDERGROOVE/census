@@ -171,6 +171,10 @@ func (c *Character) KDR() float64 {
 	return float64(c.GetKills()) / float64(c.GetDeaths())
 }
 
+func (c *Character) KDRS() string {
+	return strconv.FormatFloat(c.KDR(), 'f', 2, 64)
+}
+
 func (c *Character) getStatFromStatHistory(s string) int {
 	for _, stat := range c.Stats.StatHistory {
 		if stat.Name == s {
