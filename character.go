@@ -151,7 +151,8 @@ func (c *Character) GetRibbons() int {
 }
 
 func (c *Character) GetCerts() int {
-	return c.getStatFromStatHistory("certs") + c.Certs.Gifted
+	i, _ := strconv.Atoi(c.Certs.Gifted)
+	return c.getStatFromStatHistory("certs") + i
 }
 
 func (c *Character) GetFacilitiesDefended() int {
