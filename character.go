@@ -182,7 +182,8 @@ func (c *Character) getStatFromStatHistory(s string) int {
 }
 
 func (c *Character) ServerName() string {
-	return ""
+	s := c.Parent.GetServerByID(c.World)
+	return s.Name.En
 }
 
 func (c *Census) QueryCharacterByExactName(name string) (*Character, error) {

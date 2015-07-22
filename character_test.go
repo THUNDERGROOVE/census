@@ -12,10 +12,10 @@ func TestQueryCharacter(t *testing.T) {
 		t.Fatalf("Error getting character information: %v\n", err.Error())
 	}
 	for _, v := range char.Stats.StatHistory {
-		fmt.Printf("Stat: [%v]: [%v]\n", v.Name, v.AllTime) 
+		fmt.Printf("Stat: [%v]: [%v]\n", v.Name, v.AllTime)
 	}
-	
-	fmt.Printf("[%v] %v\n", char.Outfit.Alias, char.Name.First)
+
+	fmt.Printf("[%v] %v@%v\n", char.Outfit.Alias, char.Name.First, char.ServerName())
 }
 
 func TestKillCount(t *testing.T) {
