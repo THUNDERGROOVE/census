@@ -4,6 +4,15 @@
 package census
 
 var BaseURL = "http://census.daybreakgames.com/"
+var BaseURLOld = "http://census.soe.com/"
+
+func init() {
+	BaseURL = BaseURLOld
+}
+
+type CensusData struct {
+	Error string `json:"error"`
+}
 
 // NewCensus returns a new census object given your service ID
 func NewCensus(ServiceID string, Namespace string) *Census {

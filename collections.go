@@ -1,23 +1,9 @@
 package census
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
+	"github.com/jmoiron/jsonq"
 )
-
-// json_collection is used to circumvent the inconsistancies in the census
-// data
-type json_collection struct {
-	count        json.RawMessage `json:"count"`
-	hidden       json.RawMessage `json:"hidden"`
-	name         string          `json:"name"`
-	resolve_list []string        `json:"resolve_list"`
-}
-
-type json_collection_parse struct {
-	datatypelist []json_collection `json:"datatype_list"`
-}
 
 // Collection represents a single collection
 type Collection struct {
@@ -29,44 +15,34 @@ type Collection struct {
 	ResolveList  []string
 }
 
-func (j *json_collection) ToCollection() *Collection {
-	out := new(Collection)
-
-	switch string(j.count) {
-	case "?":
-		out.UnknownCount = true
-	case "dynamic":
-		out.Dynamic = true
-	default:
-		i, err := strconv.Atoi(string(j.count))
-		if err != nil {
-			fmt.Println("Unexpected library error:",
-				" switch hit default but not convertable to integer",
-				err.Error())
-		}
-		out.Count = i
-	}
-
-	out.Hidden, _ = strconv.ParseBool(string(j.hidden))
-
-	out.Name = string(j.name)
-	out.ResolveList = j.resolve_list
-
-	return out
-}
-
-func getCollection(c *Census) ([]*Collection, error) {
+func GetCollections(c *Census) ([]*Collection, error) {
 	var out []*Collection
-	tmp := new(json_collection_parse)
-	tmp.datatypelist = make([]json_collection, 0)
+	tmp := map[string]interface{}{}
+
 	url := BaseURL + "get/" + c.namespace
 	fmt.Printf("Getting url: %v\n", url)
-	if err := decode(c, url, tmp); err != nil {
+	if err := decode(c, url, &tmp); err != nil {
 		return nil, err
 	}
-	fmt.Printf("%v\n", tmp)
-	for _, v := range tmp.datatypelist {
-		out = append(out, v.ToCollection())
+	jq := jsonq.NewQuery(tmp)
+	n, err := jq.ArrayOfObjects("datatype_list")
+	if err != nil {
+		return nil, err
+	}
+
+	//fmt.Printf("%v\n", data)
+	for _, v := range n {
+		data := jsonq.NewQuery(v)
+		out = append(out, parse_collection(data))
 	}
 	return out, nil
+}
+
+func parse_collection(jq *jsonq.JsonQuery) *Collection {
+	out := new(Collection)
+	out.Count, _ = jq.Int("count")
+	out.Hidden, _ = jq.Bool("hidden")
+	out.Name, _ = jq.String("name")
+	out.ResolveList, _ = jq.ArrayOfStrings("resolve_list")
+	return out
 }
