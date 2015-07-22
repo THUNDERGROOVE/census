@@ -186,6 +186,11 @@ func (c *Character) ServerName() string {
 	return s.Name.En
 }
 
+func (c *Character) TKPercent() int {
+	kills := c.TeamKillsInLast(1000)
+	return int(float64(float64(kills)/1000) * 100)
+}
+
 func (c *Census) QueryCharacterByExactName(name string) (*Character, error) {
 	name = strings.ToLower(name)
 	if c, ok := CharacterCahceMap[name]; ok {
