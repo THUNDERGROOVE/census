@@ -151,7 +151,7 @@ func (c *Character) GetRibbons() int {
 }
 
 func (c *Character) GetCerts() int {
-	return c.getStatFromStatHistory("certs")
+	return c.getStatFromStatHistory("certs") + c.Certs.Gifted
 }
 
 func (c *Character) GetFacilitiesDefended() int {
