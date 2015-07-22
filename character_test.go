@@ -11,6 +11,10 @@ func TestQueryCharacter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error getting character information: %v\n", err.Error())
 	}
+	for _, v := range char.Stats.StatHistory {
+		fmt.Printf("Stat: [%v]: [%v]\n", v.Name, v.AllTime) 
+	}
+	
 	fmt.Printf("[%v] %v\n", char.Outfit.Alias, char.Name.First)
 }
 

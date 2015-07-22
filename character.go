@@ -134,6 +134,26 @@ type CharacterCache struct {
 	Cache
 }
 
+func (c *Character) GetFacilitiesCaptured() int {
+	return c.getStatFromStatHistory("facility_capture")
+}
+
+func (c *Character) GetScore() int {
+	return c.getStatFromStatHistory("score")
+}
+
+func (c *Character) GetMedals() int {
+	return c.getStatFromStatHistory("medals")
+}
+
+func (c *Character) GetRibbons() int {
+	return c.getStatFromStatHistory("ribbons")
+}
+
+func (c *Character) GetFacilitiesDefended() int {
+	return c.getStatFromStatHistory("facility_defend")
+}
+
 func (c *Character) GetKills() int {
 	return c.getStatFromStatHistory("kills")
 }
