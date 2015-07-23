@@ -3,11 +3,15 @@
 // It's centered more so around data from Planetside 2
 package census
 
+import (
+	"strings"
+)
+
 var BaseURL = "http://census.daybreakgames.com/"
 var BaseURLOld = "http://census.soe.com/"
 
 func init() {
-	BaseURL = BaseURLOld
+	//BaseURL = BaseURLOld
 }
 
 type CensusData struct {
@@ -26,4 +30,11 @@ func NewCensus(ServiceID string, Namespace string) *Census {
 type Census struct {
 	serviceID string
 	namespace string
+}
+
+func (c *Census) IsEU() bool {
+	if strings.Contains(c.namespace, "eu") {
+		return true
+	}
+	return false
 }
