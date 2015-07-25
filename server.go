@@ -1,7 +1,6 @@
 package census
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -18,13 +17,11 @@ type Servers struct {
 }
 
 func (c *Census) GetServerByID(id string) Server {
-	url := fmt.Sprintf("%v%v/get/%v/world/?world_id=%v", BaseURL, c.serviceID, c.namespace, id)
-	fmt.Printf("URL: %v\n", url)
+	req := c.NewRequest(REQUEST_WORLD, "world_id="+id, "", 0)
 	s := new(Servers)
-	if err := decode(c, url, s); err != nil {
+	if err := req.Do(s); err != nil {
 		log.Printf("Error decoding servers: [%v]", err.Error())
 	}
-
 	if len(s.Servers) >= 1 {
 		return s.Servers[0]
 	} else {

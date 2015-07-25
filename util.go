@@ -12,8 +12,8 @@ var ErrTooManyRetries = fmt.Errorf("Failed too many retries")
 // This looks ugly as fuck
 func decode(c *Census, url string, v interface{}) error {
 	t := fluent.New()
-	t.Get(url).Retry(3)
 
+	t.Get(url).Retry(3)
 	if resp, err := t.Send(); err == nil {
 		defer resp.Body.Close()
 		if data, err := ioutil.ReadAll(resp.Body); err == nil {

@@ -14,8 +14,13 @@ func init() {
 	//BaseURL = BaseURLOld
 }
 
+// CensusData is a struct that contains various metadata that a Census request can have.
 type CensusData struct {
-	Error string `json:"error"`
+	error string `json:"error"`
+}
+
+func (c *CensusData) Error() string {
+	return c.error
 }
 
 // NewCensus returns a new census object given your service ID

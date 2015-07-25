@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var ErrCharDoesNotExist = fmt.Errorf("census: That character doesn't exist")
@@ -15,8 +16,10 @@ type Characters struct {
 	Characters []Character `json:"character_list"`
 }
 
+// Character is a struct representing a character in the Census API with all possible useful resolves
 type Character struct {
 	CensusData
+	Cache
 	ID string `json:"character_id"`
 
 	Name struct {
@@ -127,13 +130,68 @@ type Character struct {
 	IsCached bool    `json:"-"`
 }
 
-var CharacterCahceMap = make(map[string]*CharacterCache)
+// GetCharacterByName is a method to get a character instance by name
+// it internally caches information and will pull new information if
+// fifteen minutes has passed since the update.
+func (c *Census) GetCharacterByName(name string) (*Character, error) {
+	name = strings.ToLower(name)
+	char := new(Character)
+	id, err := c.GetCharacterID(name)
+	if err != nil {
+		return nil, err
+	}
+	if err := ReadCache(CACHE_CHARACTER, id, char); err == ErrCacheNotFound {
+		if !char.Cache.IsInvalid() {
+			return char, nil
+		}
+	}
 
-type CharacterCache struct {
-	Character
-	Cache
+	return c.getChar(name)
 }
 
+func (c *Census) getChar(name string) (*Character, error) {
+	req := c.NewRequest(REQUEST_CHARACTER, "name.first_lower="+name,
+		"item,profile,faction,stat,weapon_stat,stat_history,online_status,friends,world,outfity",
+		1)
+	tmp := new(Characters)
+
+	if err := req.Do(tmp); err != nil {
+		return nil, err
+	}
+
+	if len(tmp.Characters) < 1 {
+		return nil, ErrCharDoesNotExist
+	}
+	char := tmp.Characters[0]
+	char.Parent = c
+	char.Cache = NewCacheUpdate(time.Minute * 15)
+
+	return &char, nil
+
+}
+
+// GetCharacterID
+// @TODO: Update to use Cache if possible
+func (c *Census) GetCharacterID(name string) (string, error) {
+	chars := new(Characters)
+
+	req := c.NewRequest(
+		REQUEST_CHARACTER,
+		"name.first_lower="+strings.ToLower(name), "", 1, "c:show=name")
+
+	if err := req.Do(chars); err != nil {
+		return "<nil>", err
+	}
+
+	if len(chars.Characters) == 0 {
+		return "<nil>", ErrCharDoesNotExist
+	}
+
+	char := chars.Characters[0]
+	return char.Name.First, nil
+}
+
+// GetFacilitiesCaptured returns the facilities captured via the stats history
 func (c *Character) GetFacilitiesCaptured() int {
 	return c.getStatFromStatHistory("facility_capture")
 }
@@ -159,21 +217,43 @@ func (c *Character) GetFacilitiesDefended() int {
 	return c.getStatFromStatHistory("facility_defend")
 }
 
+// GetKills returns the total kill count for a given Character
 func (c *Character) GetKills() int {
 	return c.getStatFromStatHistory("kills")
 }
 
+// GetDeaths returns the total death count for a given Character
 func (c *Character) GetDeaths() int {
 	return c.getStatFromStatHistory("deaths")
 }
 
+// KDR returns the KDR of a Character
 func (c *Character) KDR() float64 {
 	return float64(c.GetKills()) / float64(c.GetDeaths())
 }
 
+// KDRS returns the KDR of a Character in a more human
+// readable format
 func (c *Character) KDRS() string {
 	return strconv.FormatFloat(c.KDR(), 'f', 2, 64)
 }
+
+// ServerName returns the English name for the server the
+// Character resides on
+func (c *Character) ServerName() string {
+	s := c.Parent.GetServerByID(c.World)
+	return s.Name.En
+}
+
+// TKPercent is the percent of TKs in the last 1000 kills.
+// This is changing to total once my caching system is in place.
+func (c *Character) TKPercent() int {
+	kills := c.TeamKillsInLast(1000)
+	return int(float64(float64(kills)/1000) * 100)
+}
+
+/* Helpers
+ */
 
 func (c *Character) getStatFromStatHistory(s string) int {
 	for _, stat := range c.Stats.StatHistory {
@@ -183,42 +263,4 @@ func (c *Character) getStatFromStatHistory(s string) int {
 		}
 	}
 	return 0
-}
-
-func (c *Character) ServerName() string {
-	s := c.Parent.GetServerByID(c.World)
-	return s.Name.En
-}
-
-func (c *Character) TKPercent() int {
-	kills := c.TeamKillsInLast(1000)
-	return int(float64(float64(kills)/1000) * 100)
-}
-
-func (c *Census) QueryCharacterByExactName(name string) (*Character, error) {
-	name = strings.ToLower(name)
-	if c, ok := CharacterCahceMap[name]; ok {
-		if !c.IsInvalid() {
-			c.Character.IsCached = true
-			return &c.Character, nil
-		} else {
-			delete(CharacterCahceMap, name)
-		}
-	}
-	tmp := new(Characters)
-	url := fmt.Sprintf("%v%v/get/%v/character/?name.first_lower=%v&c:resolve=item,profile,faction,stat,weapon_stat,stat_history,online_status,friends,world,outfit",
-		BaseURL, c.serviceID, c.namespace, name)
-	if err := decode(c, url, tmp); err != nil {
-		return nil, err
-	}
-	if len(tmp.Characters) < 1 {
-		return nil, ErrCharDoesNotExist
-	}
-	char := tmp.Characters[0]
-	char.Parent = c
-	cc := &CharacterCache{}
-	cc.Character = char
-	cc.Cache = NewCache()
-	CharacterCahceMap[name] = cc
-	return &char, nil
 }

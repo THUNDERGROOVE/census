@@ -1,0 +1,2 @@
+# Get last 1000 kills since after=<timestamp>
+/characters_event/?character_id=5428352933374094753&type=KILL&after=1437724800&c:resolve=character&c:limit=1000

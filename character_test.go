@@ -7,11 +7,12 @@ import (
 
 func TestQueryCharacter(t *testing.T) {
 	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
-	char, err := c.QueryCharacterByExactName("THUNDERGROOVE")
-	fmt.Printf("ID: %v\n", char.ID)
+	char, err := c.GetCharacterByName("THUNDERGROOVE")
 	if err != nil {
 		t.Fatalf("Error getting character information: %v\n", err.Error())
 	}
+
+	fmt.Printf("ID: %v\n", char.ID)
 	for _, v := range char.Stats.StatHistory {
 		fmt.Printf("Stat: [%v]: [%v]\n", v.Name, v.AllTime)
 	}
@@ -21,7 +22,7 @@ func TestQueryCharacter(t *testing.T) {
 
 func TestKillCount(t *testing.T) {
 	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
-	char, err := c.QueryCharacterByExactName("THUNDERGROOVE")
+	char, err := c.GetCharacterByName("THUNDERGROOVE")
 	if err != nil {
 		t.Fatalf("Error getting character information: %v\n", err.Error())
 	}

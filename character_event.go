@@ -1,7 +1,6 @@
 package census
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -11,6 +10,7 @@ const (
 	TR = "3"
 )
 
+// CharacterEvent is a single frame of a /characters_event/ request
 type CharacterEvent struct {
 	Character          Character `json:"character"`
 	CharacterID        string    `json:"character_id"`
@@ -25,21 +25,31 @@ type CharacterEvent struct {
 	CharacterLoadoutID string    `json:"character_loadout_id"`
 	AttackerLoadoutID  string    `json:"attacker_loadout_id"`
 	TableType          string    `json:"table_type"`
-	Cache `json:"cache"`
+	Cache              `json:"cache"`
 }
 
+// CharacterEventList is a struct capable of being Unmarshaled from a
+// /characters_event/ request
 type CharacterEventList struct {
 	List []CharacterEvent `json:"characters_event_list"`
 }
 
+// GetKillEvents returns a CharacterEventList given a count and characterID
 func (c *Census) GetKillEvents(count int, characterID string) *CharacterEventList {
 	out := new(CharacterEventList)
 
-	url := fmt.Sprintf("%v%v/get/%v/characters_event/?character_id=%v&type=KILL&c:resolve=character&c:limit=%v", BaseURL, c.serviceID, c.namespace, characterID, count)
-	fmt.Printf("url: %v\n", url)
-	if err := decode(c, url, out); err != nil {
-		log.Printf("error: %v", err.Error())
+	req := c.NewRequest(
+		REQUEST_CHARACTER_EVENTS,
+		"character_id="+characterID,
+		"character",
+		count,
+		"type=KILL")
+
+	if err := req.Do(out); err != nil {
+		log.Printf("ERROR: GetKillEvents() -> req.Do() [%v]", err.Error())
+		return nil
 	}
+
 	return out
 }
 
