@@ -9,6 +9,7 @@ type requestType string
 const (
 	REQUEST_CHARACTER        requestType = "character"
 	REQUEST_CHARACTER_EVENTS requestType = "character_event"
+	REQUEST_WORLD            requestType = "world"
 )
 
 type Request struct {
