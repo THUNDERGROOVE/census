@@ -8,6 +8,7 @@ import (
 func TestQueryCharacter(t *testing.T) {
 	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
 	char, err := c.QueryCharacterByExactName("THUNDERGROOVE")
+	fmt.Printf("ID: %v\n", char.ID)
 	if err != nil {
 		t.Fatalf("Error getting character information: %v\n", err.Error())
 	}

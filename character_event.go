@@ -25,6 +25,7 @@ type CharacterEvent struct {
 	CharacterLoadoutID string    `json:"character_loadout_id"`
 	AttackerLoadoutID  string    `json:"attacker_loadout_id"`
 	TableType          string    `json:"table_type"`
+	Cache `json:"cache"`
 }
 
 type CharacterEventList struct {
