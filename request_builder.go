@@ -42,7 +42,6 @@ func (c *Census) NewRequest(Type requestType, query string, resolves string, lim
 	}
 
 	req.url = base
-	fmt.Printf("Request builder made url: [%v]\n", req.url)
 	return req
 }
 

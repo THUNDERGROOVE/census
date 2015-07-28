@@ -37,6 +37,13 @@ type Census struct {
 	namespace string
 }
 
+func (c *Census) CleanNamespace() string {
+	if strings.Contains(c.namespace, ":") {
+		return strings.Split(c.namespace, ":")[0]
+	}
+	return c.namespace
+}
+
 func (c *Census) IsEU() bool {
 	if strings.Contains(c.namespace, "eu") {
 		return true

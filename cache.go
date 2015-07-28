@@ -23,8 +23,9 @@ const (
 
 // Cache is a struct
 type Cache struct {
-	invalid time.Time // Legacy @TODO: Remove when possible
-	Expires time.Time `json:"expires"`
+	invalid     time.Time // Legacy @TODO: Remove when possible
+	Expires     time.Time `json:"expires"`
+	LastUpdated time.Time `json:"last-updated"`
 }
 
 // NewCache is going to change to NewCacheUpdate soon
