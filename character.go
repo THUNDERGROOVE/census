@@ -140,7 +140,8 @@ func (c *Census) GetCharacterByName(name string) (*Character, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := ReadCache(CACHE_CHARACTER, id, char); err == ErrCacheNotFound {
+	// @BUG: logic error?
+	if err := ReadCache(CACHE_CHARACTER, id, char); err != ErrCacheNotFound {
 		if !char.Cache.IsInvalid() {
 			return char, nil
 		}
@@ -149,9 +150,11 @@ func (c *Census) GetCharacterByName(name string) (*Character, error) {
 	return c.getChar(name)
 }
 
+const character_resolves = "item,profile,faction,stat,weapon_stat,stat_history,online_status,friends,world,outfit"
+
 func (c *Census) getChar(name string) (*Character, error) {
 	req := c.NewRequest(REQUEST_CHARACTER, "name.first_lower="+name,
-		"item,profile,faction,stat,weapon_stat,stat_history,online_status,friends,world,outfity",
+		character_resolves,
 		1)
 	tmp := new(Characters)
 
@@ -168,6 +171,28 @@ func (c *Census) getChar(name string) (*Character, error) {
 
 	return &char, nil
 
+}
+
+func (c *Census) GetCharacterByID(ID string) (*Character, error) {
+	chars := new(Characters)
+	char := new(Character)
+	if err := ReadCache(CACHE_CHARACTER, ID, char); err != ErrCacheNotFound {
+		if !char.Cache.IsInvalid() {
+			return char, nil
+		}
+	}
+
+	req := c.NewRequest(REQUEST_CHARACTER, "character_id="+ID, character_resolves, 1)
+	if err := req.Do(chars); err != nil {
+		return nil, err
+	}
+	if len(chars.Characters) < 1 {
+		return nil, ErrCharDoesNotExist
+	}
+	char = &chars.Characters[0]
+	char.Parent = c
+	char.Cache = NewCacheUpdate(time.Minute * 15)
+	return char, nil
 }
 
 // GetCharacterID

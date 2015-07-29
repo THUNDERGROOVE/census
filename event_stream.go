@@ -1,13 +1,13 @@
 package census
 
 import (
-	"encoding/json"
 	"fmt"
 	"golang.org/x/net/websocket"
 )
 
 type eventType uint8
 
+// Cosntants not used..  May do some stuff with these in the future
 const (
 	// Player Events
 	EventNil eventType = iota
@@ -32,6 +32,8 @@ const (
 	EventPlayerLogout
 )
 
+// EventStream is an abstraction for the Planetside 2 streaming data API
+// instead of using a raw websocket connection you can just use channels.
 type EventStream struct {
 	parent *Census
 	conn   *websocket.Conn
@@ -40,6 +42,8 @@ type EventStream struct {
 	Closed chan struct{}
 }
 
+// Event is an event from the Planetside real time event streaming API.
+// @TODO: Add the rest of the fields.  They're all in the documentation
 type Event struct {
 	Payload struct {
 		EventName   string `json:"event_name"`
@@ -51,32 +55,41 @@ type Event struct {
 	Type    string `json:"type"`
 }
 
+// EventSent is a representation of any data we send to the API
 type EventSent struct {
 	Service    string   `json:"service"`
 	Action     string   `json:"action"`
 	Worlds     []string `json:"worlds"`
 	Characters []string `json:"characters"`
 	EventNames []string `json:"eventNames"`
-	All        string   `json:"all"`
+	//	All        string   `json:"all"`
 }
 
+// NewEventSubscription returns an EventSent with the required fields for an
+// event subscription already filled out
 func NewEventSubscription() *EventSent {
 	s := new(EventSent)
 	s.Service = "event"
 	s.Action = "subscribe"
+	s.Characters = []string{}
+	s.Worlds = []string{}
+	s.EventNames = []string{}
 	return s
 }
 
+// NewEventStream returns an EventStream
+//
+// NOTICE: This method dials a websocket
+//       : This method starts a Go routine
 func (c *Census) NewEventStream() *EventStream {
 	ev := new(EventStream)
 	ev.parent = c
+	ev.Events = make(chan Event, 0)
 	ev.Err = make(chan error, 0)
 	ev.Closed = make(chan struct{}, 0)
 
 	var err error
-	fmt.Printf("Starting websocket\n")
 	url := fmt.Sprintf("wss://push.planetside2.com/streaming?environment=%v&service-id=%v", c.CleanNamespace(), c.serviceID)
-	fmt.Printf("url: %v\n", url)
 	ev.conn, err = websocket.Dial(
 		url,
 		"", "http://localhost/")
@@ -86,50 +99,44 @@ func (c *Census) NewEventStream() *EventStream {
 		return ev
 	}
 
-	fmt.Printf("Starting listen routine\n")
 	go func() {
-
-		var buffer = make([]byte, 2048)
+		// Only keep one allocation around.  Pass values to the channel instead.
+		var event = new(Event)
 		for {
-			n, err := ev.conn.Read(buffer)
-			if err != nil {
+			if err := websocket.JSON.Receive(ev.conn, event); err != nil {
 				ev.Err <- err
 				continue
 			}
-			msg := buffer[:n]
-			fmt.Printf("msg: %v\n", string(msg))
-			event := Event{}
-			if err := json.Unmarshal(msg, &event); err != nil {
-				ev.Err <- err
-				continue
-			}
-			ev.Events <- event
+			ev.Events <- *event
 		}
 	}()
 	return ev
 }
 
+// Subscribe verifies that the provided EventSent is a subscripton event
+// and sends it
+//
 // @TODO: Need checks to make sure it's a subscribe
 func (e *EventStream) Subscribe(sub *EventSent) error {
 	return e.RawEventSent(sub)
 }
 
+// RawEventSent sends a Raw, user formed EventSent
 func (e *EventStream) RawEventSent(sent *EventSent) error {
-	data, err := json.Marshal(sent)
-	if err != nil {
-		return err
-	}
-	_, err = e.conn.Write(data)
-	if err != nil {
-		return err
-	}
-	return nil
+	return websocket.JSON.Send(e.conn, sent)
 
 }
 
+// ClearSubscriptions sends an event to clear all event subscriptions
 func (e *EventStream) ClearSubscriptions() error {
 	return e.RawEventSent(&EventSent{
 		Service: "event",
 		Action:  "clearSubscribe",
-		All:     "true"})
+		/*All:     "true"*/})
+}
+
+// Close closes the unlderlying websocket.
+// This will send a struct{}{} down the Closed channel
+func (c *EventStream) Close() {
+	c.conn.Close()
 }
