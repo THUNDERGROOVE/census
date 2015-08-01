@@ -91,6 +91,15 @@ func ReadCache(ct cacheType, identifier interface{}, v interface{}) error {
 	return nil
 }
 
+func CheckCache(ct cacheType, identifier interface{}) bool {
+	filename, _ := cacheNames(ct, identifier)
+
+	if _, err := os.Stat(filename); err == nil {
+		return true
+	}
+	return false
+}
+
 // cacheNames is a helper function to provide a filename and path given a
 // cacheType and an idenitfier
 func cacheNames(ct cacheType, identifier interface{}) (filename string, path string) {

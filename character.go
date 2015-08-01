@@ -272,9 +272,22 @@ func (c *Character) ServerName() string {
 
 // TKPercent is the percent of TKs in the last 1000 kills.
 // This is changing to total once my caching system is in place.
+// @TODO: Error handle? Nahh
 func (c *Character) TKPercent() int {
-	kills := c.TeamKillsInLast(1000)
-	return int(float64(float64(kills)/1000) * 100)
+	events, err := c.Parent.GetAllKillEvents(c.ID)
+	if err != nil { // Log maybe?
+		return -100
+	}
+	var tkcount int
+	for _, v := range events.List {
+		if v.Character.FactionID == c.FactionID {
+			tkcount += 1
+		}
+	}
+	// tk/k * 100
+	return int(
+		float64(tkcount) / float64(len(events.List)) * 100,
+	)
 }
 
 /* Helpers

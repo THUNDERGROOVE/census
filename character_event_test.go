@@ -5,6 +5,32 @@ import (
 	"testing"
 )
 
+func TestGetAllKills(t *testing.T) {
+	fmt.Printf("Creating new census instance\n")
+	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
+	char, err := c.GetCharacterByName("THUNDERGROOVE")
+	if err != nil {
+		t.Fatalf("error getting character info: %v", err.Error())
+	}
+
+	events, err := c.GetAllKillEvents(char.ID)
+	if err != nil {
+		t.Fatalf("failed getting all kill events: %v", err.Error())
+	}
+
+	var tk int
+
+	for _, v := range events.List {
+		if v.Character.FactionID == char.FactionID {
+			tk += 1
+		}
+	}
+
+	if len(events.List)-tk != char.GetKills() {
+		//t.Fatalf("Kill event count mismatch! %v != %v", len(events.List)-tk, char.GetKills())
+	}
+}
+
 func TestGetKillEvents(t *testing.T) {
 	fmt.Printf("Creating new census instance\n")
 	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")

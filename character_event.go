@@ -3,6 +3,7 @@ package census
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -56,14 +57,51 @@ func (c *Census) GetKillEvents(count int, characterID string) *CharacterEventLis
 	return out
 }
 
+// GetAllKillEvents returns all kill events for a given character
+// Notice: This method can do seveeral requets
+//       : This method can take several seconds to run
 func (c *Census) GetAllKillEvents(characterID string) (*CharacterEventList, error) {
 	out := new(CharacterEventList)
+	var before int64
 
 	if err := ReadCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err == nil {
+		i, err := strconv.Atoi(out.List[len(out.List)-1].Time)
+		if err != nil {
+			return nil, err
+		}
+		before = int64(i)
+	} else {
+		before = time.Now().Unix()
+	}
+	events := out.List
+	for {
+		req := c.NewRequest(REQUEST_CHARACTER_EVENTS,
+			"character_id="+characterID,
+			"character", 1000, "type=KILL", fmt.Sprintf("before=%v", before))
+		if err := req.Do(out); err != nil {
+			return nil, err
+		}
 
+		events = append(events, out.List...)
+
+		if len(out.List) == 0 {
+			break
+		}
+		ev := out.List[len(out.List)-1]
+
+		i, err := strconv.Atoi(ev.Time)
+
+		if err != nil {
+			return nil, err
+		}
+		before = int64(i)
+
+		if out.Returned < 1000 {
+			break
+		}
 	}
 
-	// Perform operatons
+	out.List = events
 
 	if err := WriteCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err != nil {
 		return out, err

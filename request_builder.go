@@ -8,7 +8,7 @@ type requestType string
 
 const (
 	REQUEST_CHARACTER        requestType = "character"
-	REQUEST_CHARACTER_EVENTS requestType = "character_event"
+	REQUEST_CHARACTER_EVENTS requestType = "characters_event"
 	REQUEST_WORLD            requestType = "world"
 )
 
@@ -42,6 +42,7 @@ func (c *Census) NewRequest(Type requestType, query string, resolves string, lim
 	}
 
 	req.url = base
+	//	fmt.Printf("url: %v\n", base)
 	return req
 }
 
