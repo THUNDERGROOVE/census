@@ -105,7 +105,8 @@ func (c *Census) NewEventStream() *EventStream {
 		for {
 			if err := websocket.JSON.Receive(ev.conn, event); err != nil {
 				ev.Err <- err
-				continue
+				ev.Closed <- struct{}{}
+				break
 			}
 			ev.Events <- *event
 		}
