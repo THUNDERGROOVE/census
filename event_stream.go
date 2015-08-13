@@ -124,7 +124,6 @@ func (c *Census) NewEventStream() *EventStream {
 				break
 			} else {
 				data := buf[:n]
-				fmt.Printf("data: '%v'\n", string(data))
 				if err := GlobalDecoder.DecodeFast(data, event); err != nil {
 					ev.Err <- err
 					ev.Closed <- struct{}{}
