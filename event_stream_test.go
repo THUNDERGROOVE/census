@@ -1,13 +1,24 @@
 package census
 
 import (
-	"fmt"
-	"net/http"
-	_ "net/http/pprof"
+	"github.com/pquerna/ffjson/ffjson"
 	"testing"
-	"time"
 )
 
+func BenchmarkUnmarshal(b *testing.B) {
+	testData := []byte(`{"payload":{"character_id":"5428366097940635073","event_name":"PlayerLogout","timestamp":"1439505006","world_id":"1002"},"service":"event","type":"serviceMessage"}`)
+
+	dec := ffjson.NewDecoder()
+	var event Event
+	for i := 0; i < 100000; i++ {
+		b.Log("Decoding", i)
+		if err := dec.Decode(testData, &event); err != nil {
+			b.Fatalf("decode error: %v\n", err.Error())
+		}
+	}
+}
+
+/*
 func TestEventStreaming(t *testing.T) {
 
 	go func() {
@@ -17,9 +28,6 @@ func TestEventStreaming(t *testing.T) {
 	events := c.NewEventStream()
 	defer events.Close()
 	time.Sleep(3 * time.Second)
-	/*	if err := events.ClearSubscriptions(); err != nil {
-		fmt.Printf("err: %v\n", err.Error())
-	}*/
 	sub := NewEventSubscription()
 	sub.Worlds = []string{"all"}
 	sub.Characters = []string{"all"}
@@ -48,4 +56,4 @@ func TestEventStreaming(t *testing.T) {
 			}
 		}
 	}
-}
+}*/

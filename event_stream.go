@@ -2,6 +2,7 @@ package census
 
 import (
 	"fmt"
+	"github.com/pquerna/ffjson/ffjson"
 	"golang.org/x/net/websocket"
 )
 
@@ -42,17 +43,22 @@ type EventStream struct {
 	Closed chan struct{}
 }
 
+// GlobalDecoder exists so we don't allocate a new decoder every response
+var GlobalDecoder = ffjson.NewDecoder()
+
 // Event is an event from the Planetside real time event streaming API.
 // @TODO: Add the rest of the fields.  They're all in the documentation
 type Event struct {
-	Payload struct {
-		EventName   string `json:"event_name"`
-		Time        string `json:"timestamp"`
-		CharacterID string `json:"character_id"`
-		WorldID     string `json:"world_id"`
-	} `json:"payload"`
+	Payload EventPayload
 	Service string `json:"service"`
 	Type    string `json:"type"`
+}
+
+type EventPayload struct {
+	EventName   string `json:"event_name"`
+	Time        string `json:"timestamp"`
+	CharacterID string `json:"character_id"`
+	WorldID     string `json:"world_id"`
 }
 
 // EventSent is a representation of any data we send to the API
@@ -102,13 +108,31 @@ func (c *Census) NewEventStream() *EventStream {
 	go func() {
 		// Only keep one allocation around.  Pass values to the channel instead.
 		var event = new(Event)
+		var buf = make([]byte, 2048)
 		for {
-			if err := websocket.JSON.Receive(ev.conn, event); err != nil {
+			/*
+				if err := websocket.JSON.Receive(ev.conn, event); err != nil {
+					ev.Err <- err
+					ev.Closed <- struct{}{}
+					break
+				}
+				ev.Events <- *event*/
+
+			if n, err := ev.conn.Read(buf); err != nil {
 				ev.Err <- err
 				ev.Closed <- struct{}{}
 				break
+			} else {
+				data := buf[:n]
+				fmt.Printf("data: '%v'\n", string(data))
+				if err := GlobalDecoder.DecodeFast(data, event); err != nil {
+					ev.Err <- err
+					ev.Closed <- struct{}{}
+					break
+				}
+
+				ev.Events <- *event
 			}
-			ev.Events <- *event
 		}
 	}()
 	return ev
