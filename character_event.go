@@ -130,7 +130,7 @@ func (c *CharacterEventList) UpdateCache(census *Census, characterID string) err
 	if c.Returned == 1000 {
 		// @TODO: Make run a complete rebuild of the kills cache
 		panic("Been too long since we updated.  Over 1000; cache invalid.  Must rebuild")
-		return nil
+		// Unreachable code: return nil
 	}
 
 	c.Cache = NewCacheUpdate(time.Minute * 30)

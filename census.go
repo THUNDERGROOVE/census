@@ -16,7 +16,7 @@ func init() {
 
 // CensusData is a struct that contains various metadata that a Census request can have.
 type CensusData struct {
-	error string `json:"error"`
+	Error string `json:"error"`
 }
 
 func (c *CensusData) Error() string {

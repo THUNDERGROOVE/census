@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// ErrCharDoesNotExist occurs when a function or method cannot find the given
+// user in the current context
 var ErrCharDoesNotExist = fmt.Errorf("census: That character doesn't exist")
 
 // Character is a struct that contains all available information for a character in Planetside 2
@@ -17,6 +19,8 @@ type Characters struct {
 }
 
 // Character is a struct representing a character in the Census API with all possible useful resolves
+//
+// TODO: Maybe break this up into sub-structures.  Too huge
 type Character struct {
 	CensusData
 	Cache
@@ -109,7 +113,7 @@ type Character struct {
 		ImageSetID     string `json:"image_set_id"`
 		ImageID        string `json:"image_id"`
 		ImagePath      string `json:"image_path"`
-		CodeTag        string `json"code_tag"`
+		CodeTag        string `json:"code_tag"`
 		UserSelectable string `json:"user_selectable"`
 	} `json:"faction"`
 
@@ -173,6 +177,7 @@ func (c *Census) getChar(name string) (*Character, error) {
 
 }
 
+// GetCharacterByID returns a Character if possible, otherwise returns nil and an error
 func (c *Census) GetCharacterByID(ID string) (*Character, error) {
 	chars := new(Characters)
 	char := new(Character)
@@ -221,23 +226,30 @@ func (c *Character) GetFacilitiesCaptured() int {
 	return c.getStatFromStatHistory("facility_capture")
 }
 
+// GetScore returns the total score of a Character
 func (c *Character) GetScore() int {
 	return c.getStatFromStatHistory("score")
 }
 
+// GetMedals returns the total medals a Character has earned
 func (c *Character) GetMedals() int {
 	return c.getStatFromStatHistory("medals")
 }
 
+// GetRibbons returns the total ribbons earned by the Character
 func (c *Character) GetRibbons() int {
 	return c.getStatFromStatHistory("ribbons")
 }
 
+// GetCerts returns the total certs a Character has earned from all possible
+// sources
 func (c *Character) GetCerts() int {
 	i, _ := strconv.Atoi(c.Certs.Gifted)
 	return c.getStatFromStatHistory("certs") + i
 }
 
+// GetFaciliesDefended returns the total amount of facilities a Character has
+// defended
 func (c *Character) GetFacilitiesDefended() int {
 	return c.getStatFromStatHistory("facility_defend")
 }
