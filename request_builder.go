@@ -79,7 +79,7 @@ func (c *Census) NewRequest(Type requestType, query string, resolves string, lim
 	}
 
 	req.url = base
-	fmt.Printf("url: %v\n", req.url)
+	//fmt.Printf("url: %v\n", req.url)
 	return req
 }
 
