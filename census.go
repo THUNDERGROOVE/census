@@ -33,10 +33,6 @@ import (
 
 var BaseURLOld = "http://census.soe.com/"
 
-func init() {
-	//BaseURL = BaseURLOld
-}
-
 // CensusData is a struct that contains various metadata that a Census request can have.
 type CensusData struct {
 	Error string `json:"error"`
