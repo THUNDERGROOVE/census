@@ -19,10 +19,6 @@ type CensusData struct {
 	Error string `json:"error"`
 }
 
-func (c *CensusData) Error() string {
-	return c.error
-}
-
 // NewCensus returns a new census object given your service ID
 func NewCensus(ServiceID string, Namespace string) *Census {
 	c := new(Census)
