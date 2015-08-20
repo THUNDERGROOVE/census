@@ -84,5 +84,5 @@ func (c *Census) NewRequest(Type requestType, query string, resolves string, lim
 }
 
 func (r *Request) Do(v interface{}) error {
-	return decode(r.Census, r.url, v)
+	return decodeURL(r.url, v)
 }

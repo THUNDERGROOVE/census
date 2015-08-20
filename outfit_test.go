@@ -26,11 +26,18 @@ import (
 	"testing"
 )
 
-func TestGetOutfit(t *testing.T) {
-	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
-	o, err := c.GetOutfitByName("The Abyss")
-	if err != nil {
-		t.Fatal(err.Error())
+const _testOutfit = `{"outfit_list":[{"outfit_id":"37531502290403331","name":"The Abyss","name_lower":"the abyss","alias":"ABYS","alias_lower":"abys","time_created":"1437401448","time_created_date":"2015-07-20 14:10:48.0","leader_character_id":"5428352933368439697","member_count":"244"}],"returned":1}`
+
+func TestDecodeOutfit(t *testing.T) {
+	outfits := new(Outfits)
+	if err := decode([]byte(_testOutfit), outfits); err != nil {
+		t.Fatalf("failed on good JSON: %v", err.Error())
 	}
-	t.Logf("CID: %v\n", o.ID)
+	if len(outfits.Outfits) != 1 {
+		t.Fatal("should have only gotten one outfit")
+	}
+	outfit := outfits.Outfits[0]
+	if outfit.NameLower != "the abyss" {
+		t.Fatalf("unexpected name: %v", outfit.NameLower)
+	}
 }

@@ -1,17 +1,17 @@
 // The MIT License (MIT)
-// 
+//
 // Copyright (c) 2015 Nick Powell
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,36 +19,77 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-// 
-// 
+//
+//
 
 package census
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestQueryCharacter(t *testing.T) {
-	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
-	char, err := c.GetCharacterByName("THUNDERGROOVE")
-	if err != nil {
-		t.Fatalf("Error getting character information: %v\n", err.Error())
-	}
+const _testChar = `{"character_list":[{"character_id":"5428352933374094753","name":{"first":"THUNDERGROOVE","first_lower":"thundergroove"},"faction_id":"1","head_id":"1","title_id":"0","times":{"creation":"1435089505","creation_date":"2015-06-23 19:58:25.0","last_save":"1439968580","last_save_date":"2015-08-19 07:16:20.0","last_login":"1439958152","last_login_date":"2015-08-19 04:22:32.0","login_count":"283","minutes_played":"19640"},"certs":{"earned_points":"29762","gifted_points":"4016","spent_points":"33143","available_points":"635","percent_to_next":"0.9920000000007"},"battle_rank":{"percent_to_next":"33","value":"73"},"profile_id":"17","daily_ribbon":{"count":"0","time":"1439967600","date":"2015-08-19 07:00:00.0"}}],"returned":1}`
 
-	fmt.Printf("ID: %v\n", char.ID)
-	for _, v := range char.Stats.StatHistory {
-		fmt.Printf("Stat: [%v]: [%v]\n", v.Name, v.AllTime)
-	}
+// static decoding
+func TestDecodeCharacter(t *testing.T) {
+	chars := new(Characters)
 
-	fmt.Printf("[%v] %v@%v\n", char.Outfit.Alias, char.Name.First, char.ServerName())
+	if err := decode([]byte(_testChar), chars); err != nil {
+		t.Fatalf("failed to decode good JSON: %v\n", err.Error())
+	}
+	if len(chars.Characters) != 1 {
+		t.Fatal("incorrect amount of characters parsed")
+	}
+	char := chars.Characters[0]
+
+	if char.Name.Lower != "thundergroove" {
+		t.Fatalf("failed to get value from json got: '%v'", char.Name.Lower)
+	}
 }
 
-func TestKillCount(t *testing.T) {
-	c := NewCensus("s:maximumtwang", "ps2ps4us:v2")
-	char, err := c.GetCharacterByName("THUNDERGROOVE")
+// dynamic tests.  Requres census to be working
+
+func TestGetCharacterByName(t *testing.T) {
+	_, err := testingCensus.GetCharacterByName("THUNDERGROOVE")
 	if err != nil {
-		t.Fatalf("Error getting character information: %v\n", err.Error())
+		t.Fatalf("couldn't find THUNDERGROOVE: %v", err.Error())
 	}
-	fmt.Printf("Got %v kills\n", char.KDR())
+}
+
+func TestGetCharacterByNameFail(t *testing.T) {
+	_, err := testingCensus.GetCharacterByName("names can't contain spaces")
+	if err == nil {
+		t.Fatalf("expected error.  Didn't get it")
+	}
+}
+
+func TestGetChar(t *testing.T) {
+	_, err := testingCensus.getChar("thundergroove") //works on lower
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestGetCharFail(t *testing.T) {
+	_, err := testingCensus.getChar("names can't contain spaces")
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestGetCharacterByID(t *testing.T) {
+	_, err := testingCensus.GetCharacterID("5428352933374094753")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestGetCharacterID(t *testing.T) {
+	id, err := testingCensus.GetCharacterID("THUNDERGROOVE")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if id != "5428352933374094753" {
+		t.Fatal("ID mismatch")
+	}
 }
