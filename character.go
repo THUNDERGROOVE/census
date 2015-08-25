@@ -341,6 +341,12 @@ func (c *Character) TKPercent() int {
 			tkcount += 1
 		}
 	}
+	if tkcount == 0 {
+		return 0
+	}
+	if len(events.List) == 0 {
+		return 0
+	}
 	// tk/k * 100
 	return int(
 		float64(tkcount) / float64(len(events.List)) * 100,
