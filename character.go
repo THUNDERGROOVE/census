@@ -222,6 +222,26 @@ func (c *Census) GetCharacterByID(ID string) (*Character, error) {
 	return char, nil
 }
 
+// GetCharacterByIDRes will return a character by the given ID with only the resolves
+//
+// resolves is a comma seperated list of fields to resolve
+//
+// This method doesn't cache.
+func (c *Census) GetCharacterByIDRes(ID, resolves string) (*Character, error) {
+	chars := new(Characters)
+	char := new(Character)
+	req := c.NewRequest(REQUEST_CHARACTER, "character_id="+ID, resolves, 1)
+	if err := req.Do(chars); err != nil {
+		return nil, err
+	}
+	if len(chars.Characters) < 1 {
+		return nil, ErrCharDoesNotExist
+	}
+	char = &chars.Characters[0]
+	char.Parent = c
+	return char, nil
+}
+
 // GetCharacterID
 // @TODO: Update to use Cache if possible
 func (c *Census) GetCharacterID(name string) (string, error) {
@@ -314,6 +334,9 @@ func (c *Character) TKPercent() int {
 	}
 	var tkcount int
 	for _, v := range events.List {
+		if v.CharacterID == c.ID {
+			continue
+		}
 		if v.Character.FactionID == c.FactionID {
 			tkcount += 1
 		}

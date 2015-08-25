@@ -1,5 +1,6 @@
-## Census
+[![GoDoc](https://godoc.org/github.com/THUNDERGROOVE/census?status.svg)](http://godoc.org/github.com/THUNDERGROOVE/census)
+## census
 
-Census is a library to interface with Daybreak games API census.  It is meant specifically for Planetside 2.
+census is a client library written for Go.  
 
-The library is currently being written on an "as features needed" basis.  Probably won't need every feature census provides.
+It's writen for [stats-bot](http://github.com/THUNDERGROOVE/stats-bot) which is a slack bot the VS-U use
