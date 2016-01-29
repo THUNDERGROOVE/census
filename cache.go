@@ -42,6 +42,7 @@ type cacheType uint8
 const (
 	CACHE_CHARACTER cacheType = iota
 	CACHE_CHARACTER_EVENTS
+	CACHE_CHARACTER_NAME_ID
 
 	CACHE_TEST
 )
@@ -49,6 +50,8 @@ const (
 var CacheTypes = []string{
 	"character",
 	"character_events",
+	"character_name",
+
 	"tests",
 }
 
@@ -131,6 +134,15 @@ func (c *Census) writeCacheRedis(ct cacheType, id interface{}, v interface{}) er
 	filename, _ := cacheNames(ct, id)
 	// Maybe want a better setup for keys
 
+	if ct == CACHE_CHARACTER_NAME_ID {
+		_, err :=c.conn.Do("SET", id, v)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	
+
 	data, err := json.Marshal(v)
 	if err != nil {
 		return nil
@@ -178,6 +190,11 @@ func (c *Census) readCacheRedis(ct cacheType, id interface{}, v interface{}) err
 		return err
 	}
 
+	if ct == CACHE_CHARACTER_NAME_ID {
+		*v.(*string) = string([]byte(data.([]uint8)))
+		
+		return nil
+	}
 	if err := json.Unmarshal([]byte(data.([]uint8)), v); err != nil {
 		return err
 	}

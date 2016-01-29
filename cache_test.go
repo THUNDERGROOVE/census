@@ -36,8 +36,28 @@ type testCache struct {
 	ID   int    `json:"id"`
 }
 
-func TestRedisCache(t *testing.T) {
+func TestRedisNameIDResolution(t *testing.T) {
+	c := new(Census)
+	c.cacheType = CensusCacheRedis
 
+	c.redisURL = "redis://127.0.0.1:6379"
+
+	if err := c.RedisConnect(); err != nil {
+		t.Errorf("RedisConnect: %s", err.Error())
+		t.Fail()
+	}
+
+	c.WriteCache(CACHE_CHARACTER_NAME_ID, "THUNDERGROOVE", "69")
+
+	var val string
+	
+	c.ReadCache(CACHE_CHARACTER_NAME_ID, "THUNDERGROOVE", &val)
+	if val != "69" {
+		t.Fatal("Cache didn't match")
+	}
+}
+
+func TestRedisCache(t *testing.T) {
 	tc1 := new(testCache)
 	tc2 := new(testCache)
 

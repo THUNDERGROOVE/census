@@ -160,13 +160,26 @@ type Character struct {
 // it internally caches information and will pull new information if
 // fifteen minutes has passed since the update.
 func (c *Census) GetCharacterByName(name string) (*Character, error) {
-	name = strings.ToLower(name)
-	char := new(Character)
-	id, err := c.GetCharacterID(name)
-	if err != nil {
-		return nil, err
+	if c.cacheType == CensusCacheNone {
+		return c.getChar(name)
 	}
-	// @BUG: logic error?
+
+	var id string
+
+	err := c.ReadCache(CACHE_CHARACTER_NAME_ID, name, &id)
+	if err == ErrCacheNotFound {
+		return c.getChar(name)
+	}
+
+	char := new(Character)
+	if err == nil {
+		err = c.ReadCache(CACHE_CHARACTER, id, char)
+		if err != nil {
+			return nil, err
+		}
+		return char, nil
+	}
+
 	if err := c.ReadCache(CACHE_CHARACTER, id, char); err != ErrCacheNotFound {
 		if !char.Cache.IsInvalid() {
 			return char, nil
@@ -179,7 +192,7 @@ func (c *Census) GetCharacterByName(name string) (*Character, error) {
 const character_resolves = "item,profile,faction,stat,weapon_stat,stat_history,online_status,friends,world,outfit"
 
 func (c *Census) getChar(name string) (*Character, error) {
-	req := c.NewRequest(REQUEST_CHARACTER, "name.first_lower="+name,
+	req := c.NewRequest(REQUEST_CHARACTER, "name.first_lower=" + strings.ToLower(name),
 		character_resolves, 1)
 	tmp := new(Characters)
 
@@ -192,7 +205,9 @@ func (c *Census) getChar(name string) (*Character, error) {
 	}
 	char := tmp.Characters[0]
 	char.Parent = c
-	char.Cache = NewCacheUpdate(time.Minute * 15)
+	if c.cacheType != CensusCacheNone {
+		char.Cache = NewCacheUpdate(time.Minute * 15)
+	}
 
 	return &char, nil
 
@@ -344,7 +359,8 @@ func (c *Character) ServerName() string {
 
 // TKPercent is the percent of TKs in the last 1000 kills.
 // This is changing to total once my caching system is in place.
-// @TODO: Error handle? Nahh
+// TODO: Error handle? Nahh
+// TODO: Change this to work more like the implementation in th
 func (c *Character) TKPercent() int {
 	events, err := c.Parent.GetAllKillEvents(c.ID)
 	if err != nil { // Log maybe?
