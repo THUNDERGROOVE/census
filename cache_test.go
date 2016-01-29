@@ -36,23 +36,38 @@ type testCache struct {
 	ID   int    `json:"id"`
 }
 
-func TestCacheWrite(t *testing.T) {
-	c := new(testCache)
-	c2 := new(testCache)
+func TestRedisCache(t *testing.T) {
 
-	c.ID = 1337
-	c.Name = "L33TH4x0r69"
-	c.Cache = NewCacheUpdate(time.Minute * 30)
+	tc1 := new(testCache)
+	tc2 := new(testCache)
 
-	if err := WriteCache(CACHE_TEST, c.ID, c); err != nil {
-		t.Fatalf("Failed to write cache to disk: [%v]", err.Error())
+	tc1.Cache = NewCacheUpdate(time.Hour)
+
+	tc1.Name = "John"
+	tc1.ID = 1
+
+	
+	c := new(Census)
+	c.cacheType = CensusCacheRedis
+
+	c.redisURL = "redis://127.0.0.1:6379"
+
+	if err := c.RedisConnect(); err != nil {
+		t.Errorf("RedisConnect: %s", err.Error())
+		t.Fail()
 	}
 
-	if err := ReadCache(CACHE_TEST, c.ID, c2); err != nil {
-		t.Fatalf("Failed to read cache from disk: [%v]", err.Error())
+	
+	if err := c.WriteCache(CACHE_TEST, tc1.ID, tc1); err != nil {
+		t.Fatalf("Failed to write Cache: %s\n", err.Error())
 	}
 
-	if c.ID != c2.ID || c.Name != c2.Name {
+	if err := c.ReadCache(CACHE_TEST, tc1.ID, tc2); err != nil {
+		t.Fatalf("Failed to read Cache: %s\n", err.Error())
+	}
+
+	if tc1.ID != tc2.ID || tc1.Name != tc2.Name {
+		t.Error(tc2)
 		t.Fatalf("Cache didn't match?")
 	}
 }

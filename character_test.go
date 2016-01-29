@@ -78,7 +78,7 @@ func TestGetCharFail(t *testing.T) {
 }
 
 func TestGetCharacterByID(t *testing.T) {
-	_, err := testingCensus.GetCharacterID("5428352933374094753")
+	_, err := testingCensus.GetCharacterByID("5428352933374094753")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -90,6 +90,7 @@ func TestGetCharacterID(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	if id != "5428352933374094753" {
+		t.Logf("%v != 5428352933374094753", id)
 		t.Fatal("ID mismatch")
 	}
 }

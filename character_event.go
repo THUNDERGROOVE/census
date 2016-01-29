@@ -86,16 +86,14 @@ func (c *Census) GetKillEvents(count int, characterID string) *CharacterEventLis
 //       : This method can take several seconds to run
 func (c *Census) GetAllKillEvents(characterID string) (*CharacterEventList, error) {
 	out := new(CharacterEventList)
-	var before int64
+	before := time.Now().Unix()
 
-	if err := ReadCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err == nil {
+	if err := c.ReadCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err == nil {
 		i, err := strconv.Atoi(out.List[len(out.List)-1].Time)
 		if err != nil {
 			return nil, err
 		}
 		before = int64(i)
-	} else {
-		before = time.Now().Unix()
 	}
 	events := out.List
 	for {
@@ -127,7 +125,7 @@ func (c *Census) GetAllKillEvents(characterID string) (*CharacterEventList, erro
 
 	out.List = events
 
-	if err := WriteCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err != nil {
+	if err := c.WriteCache(CACHE_CHARACTER_EVENTS, "kills"+characterID, out); err != nil {
 		return out, err
 	}
 

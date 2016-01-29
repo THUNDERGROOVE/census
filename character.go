@@ -167,7 +167,7 @@ func (c *Census) GetCharacterByName(name string) (*Character, error) {
 		return nil, err
 	}
 	// @BUG: logic error?
-	if err := ReadCache(CACHE_CHARACTER, id, char); err != ErrCacheNotFound {
+	if err := c.ReadCache(CACHE_CHARACTER, id, char); err != ErrCacheNotFound {
 		if !char.Cache.IsInvalid() {
 			return char, nil
 		}
@@ -180,8 +180,7 @@ const character_resolves = "item,profile,faction,stat,weapon_stat,stat_history,o
 
 func (c *Census) getChar(name string) (*Character, error) {
 	req := c.NewRequest(REQUEST_CHARACTER, "name.first_lower="+name,
-		character_resolves,
-		1)
+		character_resolves, 1)
 	tmp := new(Characters)
 
 	if err := req.Do(tmp); err != nil {
@@ -201,15 +200,31 @@ func (c *Census) getChar(name string) (*Character, error) {
 
 // GetCharacterByID returns a Character if possible, otherwise returns nil and an error
 func (c *Census) GetCharacterByID(ID string) (*Character, error) {
-	chars := new(Characters)
+	if c.cacheType == CensusCacheNone {
+		return c.characterByIDQuery(ID)
+	}
+
 	char := new(Character)
-	if err := ReadCache(CACHE_CHARACTER, ID, char); err != ErrCacheNotFound {
+	err := c.ReadCache(CACHE_CHARACTER, ID, char);
+
+	if err == nil {
 		if !char.Cache.IsInvalid() {
 			return char, nil
 		}
 	}
 
-	req := c.NewRequest(REQUEST_CHARACTER, "character_id="+ID, character_resolves, 1)
+	if err != ErrCacheNotFound {
+		return c.characterByIDQuery(ID)
+	} else {
+		return nil, err
+	}
+}
+
+func (c *Census) characterByIDQuery(ID string) (*Character, error) {
+	chars := new(Characters)
+	char := new(Character)
+	req := c.NewRequest(REQUEST_CHARACTER,
+		"character_id=" + ID, character_resolves, 1)
 	if err := req.Do(chars); err != nil {
 		return nil, err
 	}
@@ -218,7 +233,10 @@ func (c *Census) GetCharacterByID(ID string) (*Character, error) {
 	}
 	char = &chars.Characters[0]
 	char.Parent = c
-	char.Cache = NewCacheUpdate(time.Minute * 15)
+	if c.cacheType != CensusCacheNone {
+		char.Cache = NewCacheUpdate(time.Minute * 15)
+	}
+
 	return char, nil
 }
 
@@ -249,7 +267,7 @@ func (c *Census) GetCharacterID(name string) (string, error) {
 
 	req := c.NewRequest(
 		REQUEST_CHARACTER,
-		"name.first_lower="+strings.ToLower(name), "", 1, "c:show=name")
+		"name.first_lower="+strings.ToLower(name), "", 1)
 
 	if err := req.Do(chars); err != nil {
 		return "<nil>", err
@@ -260,7 +278,7 @@ func (c *Census) GetCharacterID(name string) (string, error) {
 	}
 
 	char := chars.Characters[0]
-	return char.Name.First, nil
+	return char.ID, nil
 }
 
 // GetFacilitiesCaptured returns the facilities captured via the stats history
